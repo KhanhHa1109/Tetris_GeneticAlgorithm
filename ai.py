@@ -15,10 +15,13 @@ class TetrisAI:
         self.column_diff_weights = column_diff_weights
         # number of weights to use for hole height and column diff heuristics
         # note that row filled weights uses grid_width + 1 weights
+        #trọng lượng số lượng ô chiều rộng sử dụng cho chiều cao ô và cột khác tự phát 
+        #chú ý rằng dòng được lắp đầy vào ô sử dụng _ 1 chiều rộng
         self.hole_height_cap = 5
         self.column_diff_cap = 5
         # generate random weights if not provided
-        if len(row_filled_weights) == 0:
+        #khởi tạo tự động khung trò chơi nếu không cung cấp 
+        if len(row_filled_weights) == 0: 
             for i in range(grid_width + 1):
                 self.row_filled_weights.append(self.random_weight())
         if len(hole_height_weights) == 0:
@@ -36,15 +39,17 @@ class TetrisAI:
 
     # determine what move should be made given a Tetris instance
     # the type of Tetromino used is the Tetris instance current tetromino
+    #loại tetromino được sử dụng 
     def compute_move(self, inst):
         best_move = (float('-inf'), None)
         grid = self.to_boolean_grid(inst.grid)
-        # compute moves available with the current tetromino
+        # compute moves available with the current tetromino: ước tính di chuyển có sẵn với tetromino hiện có 
         first_moves = self.compute_moves_available(grid, inst.current_tmino)
         # for every move with the current tetromino,
         # compute moves available with the next tetromino
+        # với mỗi lần di chuyển với tetro hiện tại tính toán sự di chuyển có sẵn  với tetro tiếp theo
         for move1 in first_moves:
-            # determine a score for each move
+            # determine a score for each move: 3 loại: trên, trái, phải
             tmino1 = Tetromino(inst.current_tmino.id, move1[0], move1[1], move1[2])
             self.add_to_grid(grid, tmino1)
             score = self.compute_score(grid)
@@ -55,6 +60,9 @@ class TetrisAI:
             # the code below is an experimental scoring function
             # it returns the average of the scores of the next tetromino placement
             # note that this however runs exponentially slower then the code above
+            # mã bên dưới là một chức năng tính điểm thử nghiệm
+             # nó trả về điểm trung bình của điểm của vị trí tetromino tiếp theo
+             # lưu ý rằng điều này tuy nhiên chạy chậm hơn theo cấp số nhân so với mã ở trên
             """# compute possible moves for the next tetromino
             tmino1 = Tetromino(inst.current_tmino.id, move1[0], move1[1], move1[2])
             self.add_to_grid(grid, tmino1)
@@ -73,13 +81,17 @@ class TetrisAI:
         return best_move[1]
 
     # computes all possible drop placements that can be made
+    # tính toán tất cả các vị trí thả có thể được thực hiện
     def compute_moves_available(self, grid, tetromino):
         heights = self.compute_heightmap(grid)
         possible_moves = []
         # consider each rotation
+        #xem xét từng di chuyển
         for rotation in tetromino.unique_rotations_list:
             # to compute each possible drop placement, first find the largest value
             # in the heightmap that contains the tetromino at each section of columns
+            # để tính toán từng vị trí thả có thể xảy ra, trước tiên hãy tìm giá trị lớn nhất
+              # trong bản đồ chiều cao có chứa tetromino ở mỗi phần của cột
             current_tmino = Tetromino(tetromino.id, rotation)
             for i in range(current_tmino.min_x, current_tmino.max_x + 1):
                 current_tmino.x_pos = i
@@ -93,6 +105,9 @@ class TetrisAI:
                 # we are guaranteed that the tetromino will not have collided with
                 # anything before this greatest height value, all that is needed
                 # to do now is to find the correct point of contact
+                # chúng tôi đảm bảo rằng tetromino sẽ không va chạm với
+                # bất kỳ thứ gì trước giá trị chiều cao lớn nhất này, tất cả những gì cần thiết
+                # việc cần làm bây giờ là tìm đúng điểm liên hệ
                 for j in range(max(len(grid[0]) - greatest_height - current_tmino.size, current_tmino.min_y), current_tmino.max_y + 1):
                     current_tmino.y_pos = j
                     if is_colliding(grid, current_tmino):
@@ -103,7 +118,7 @@ class TetrisAI:
                     possible_moves.append((rotation, current_tmino.x_pos, current_tmino.y_pos))
         return possible_moves
 
-    # computes a score for the given binary grid arrangement
+    # computes a score for the given binary grid arrangement nhị phân
     # True should indicate an occupied cell, False should indicate empty cell
     def compute_score(self, grid):
         # add to score based on how filled the rows are
@@ -174,7 +189,7 @@ class TetrisAI:
 
     # combines this AI and another by mixing weights
     # returns a new AI with crossovered weights
-    def crossover(self, ai):
+    def crossover(self, ai):#tái tổ hợp
         crossover_idx = randint(0, len(ai.row_filled_weights))
         new_row_filled_weights = deepcopy(self.row_filled_weights[:crossover_idx] + ai.row_filled_weights[crossover_idx:])
         crossover_idx = randint(0, len(ai.hole_height_weights))
@@ -186,7 +201,7 @@ class TetrisAI:
             new_row_filled_weights, new_hole_height_weights, new_column_diff_weights)
 
     # randomly mutates weights given a mutation rate
-    def mutate(self, mutate_rate):
+    def mutate(self, mutate_rate):# đột biến
         for i in range(self.grid_width):
             if random() <= mutate_rate:
                 self.row_filled_weights[i] = self.random_weight()
@@ -201,6 +216,7 @@ class TetrisAI:
         # produce along the abs of a standard normal distribution curve using the Box-Muller transform
         return abs(math.sqrt(-2 * math.log(random())) * math.cos(2 * math.pi * random()))
         #return random() * 2 - 1
+        # sử dụng trị tuyệt đối đường cong pp chuẩn sử dụng biến đổi box muller 
 
     # returns a deep copy of this AI
     def clone(self):

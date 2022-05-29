@@ -4,12 +4,15 @@ from random import randint
 
 # list of TetrominoType objects that describes all the possible tetrominos
 # and all possible rotations
+# liệt kê đối tượng Tetromino type mô tả tất cả khả năng xảy ra và tất cả hướng di chuyển 
 tmino_list = []
 
 # list of lists pointing to the indices of all rotationally unique tetrominos
+#danh sách các danh sách trỏ đến các chỉ số của tất cả các tetrominos luân phiên duy nhất
 unique_tmino_list = []
 
 # number of unique types of tetrominos by shape
+#số lượng các loại tetrominos duy nhất theo hình dạng
 unique_types = 0
 
 def load(file_path, grid_width, grid_height):
@@ -29,21 +32,28 @@ def load(file_path, grid_width, grid_height):
         for line in f:
             line = line.strip()
             # ignore blank lines and comments
+            # bỏ qua ô trống và nhận xét 
             if len(line) == 0 or line[0] == '#':
                 continue
             # start of new tetromino, reset all variables
+            #bắt đầu tetromino mới, đặt lại tất cả các biến
+
             if line == 'start':
                 unique_types += 1
                 block_data = []
             elif line == 'end':
                 # after finishing reading data about tetromino; process it
+                #sau khi đọc xong dữ liệu về tetromino; xử lý nó
                 # use unique_types as an id (acts like a counter)
+                # sử dụng unique _types như 1 ID
                 process_tetromino(block_data, grid_width, grid_height, unique_types, color)
             elif line.startswith('row'):
                 # read row of tetromino block data
+                #đọc hàng dữ liệu khối tetromino
                 row_data = regexp.split('(\s+)', line)[2]
                 for i in range(len(row_data)):
                     # initialize block_data if this is the first row specified
+                    # khởi tạo block_data nếu đây là hàng đầu tiên được chỉ định
                     if len(block_data) == 0:
                         for j in range(len(row_data)):
                             block_data.append([])
@@ -59,7 +69,9 @@ def load(file_path, grid_width, grid_height):
                     color = tuple([int(token) for token in value.split(',')])
 
 # given tetromino block data; compute information
+#dữ liệu khối tetromino đã cho; tính toán thông tin
 # about rotation and position and add to tetromino_types
+#về xoay và vị trí và thêm vào tetromino_types
 def process_tetromino(block_data, grid_width, grid_height, id, color):
     """Processes data about a Tetromino and stores it into tmino_list and
     unique_tmino_list.
@@ -78,6 +90,8 @@ def process_tetromino(block_data, grid_width, grid_height, id, color):
 
     # go through each of the four possible rotations and find minimum and maximum
     # x and y coordinates, add these to the tmino_list
+    # đi qua từng phép trong số bốn cách xoay có thể và tìm tối thiểu và tối đa
+    # tọa độ x và y, hãy thêm các tọa độ này vào tmino_list
     tmino_width = len(block_data)
     tmino_height = len(block_data)
     for i in range(4):
@@ -97,12 +111,17 @@ def process_tetromino(block_data, grid_width, grid_height, id, color):
 
     # determine the rotationally symmetrical tetrominoes
     # use the block_data given as the first rotational variant
+    #xác định các cách xoay 
+    # sử dụng block_data được cung cấp làm biếng
     rotations = [0]
     # try the three other rotations possible
+    # thử 3 hướng quay có thể 
     for i in range(1, 4):
         unique = True
         # compare the current rotation with all of existing rotationally unique
         # tetrominos, if it does not already exist, then it must be unique
+        # so sánh cách xoay hiện tại với tất cả cách xoay hiện tại duy nhất
+        # tetrominos, nếu nó chưa tồn tại thì nó phải là duy nhất
         for j in range(len(rotations)):
             if not rotationally_unique(
                 get_tetromino_type(id, i).block_data,
@@ -119,6 +138,8 @@ def rotationally_unique(block_data1, block_data2):
     size = len(block_data1);
     # find minimally enclosing box for each tetromino
     # essentially filtering all rows and columns that don't contain anything
+    # tìm hộp bao quanh tối thiểu cho mỗi tetromino
+    # về cơ bản là lọc tất cả các hàng và cột không chứa bất kỳ thứ gì
     cols1, rows1, cols2, rows2 = set(), set(), set(), set()
     for x in range(size):
         for y in range(size):
@@ -133,10 +154,12 @@ def rotationally_unique(block_data1, block_data2):
     width2 = max(cols2) - min(cols2) + 1
     height2 = max(rows2) - min(rows2) + 1
     # they must be different if their dimensions differ
+    #chúng phải khác nhau nếu kích thước của chúng khác nhau
     if width1 != width2 or height1 != height2:
         return True
 
     # check if any cell differs
+    #kiểm tra xem có ô nào khác không
     for i in range(width1):
         for j in range(height1):
             if block_data1[i + min(cols1)][j + min(rows1)] != block_data2[i + min(cols2)][j + min(rows2)]:
@@ -150,9 +173,11 @@ def out_of_bounds(block_data, x_pos, y_pos, grid_width, grid_height):
         for y in range(len(block_data)):
             if block_data[x][y]:
                 # convert local tetromino coordinates to grid coordinates
+                #chuyển đổi tọa độ tetromino cục bộ thành tọa độ lưới
                 grid_x = x + x_pos
                 grid_y = y + y_pos
                 # check if out of bounds
+                ## kiểm tra xem có nằm ngoài giới hạn không
                 if (grid_x < 0 or grid_y < 0
                     or grid_x >= grid_width
                     or grid_y >= grid_height):
@@ -188,9 +213,12 @@ def random_tetromino():
     """Generates a random tetromino in its first rotation state."""
 
     # randomly choose a tetromino
+    
+# chọn ngẫu nhiên một tetromino
     idx = randint(0, unique_types - 1)
     tmino_type = tmino_list[idx * 4]
     # place it in the top middle of the grid
+    # đặt nó vào giữa trên cùng của lưới
     return Tetromino(idx + 1, 0,
         (tmino_type.max_x - tmino_type.min_x) // 2 + tmino_type.min_x, tmino_type.min_y)
 

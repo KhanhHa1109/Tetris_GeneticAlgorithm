@@ -26,25 +26,29 @@ class Tetro:
         self.generation = 0
 
         # size of cell in pixels (for rendering)
+        #kích thước của ô tính bằng pixel (để hiển thị)
         self.cell_width = 40
 
         # active Tetris games and neural networks
+        # trò chơi hoạt động 
         self.tetris_instances = []
         self.tetris_ais = []
 
         # index of the tetris game that is currently being rendered to screen
+        #chỉ mục của trò chơi tetris hiện đang được hiển thị trên màn hình
         self.current_spectating_idx = 0
 
         self.load_properties()
         tetromino.load('data/shapes.txt', self.grid_width, self.grid_height)
         self.init_pygame()
 
-        # list of ai delays that can be toggled through
+        # list of ai delays that can be toggled through: danh sách AI delay
         self.ai_delay_list = [0, 1, 5, 10, 25, 100, 250, 500, 1000, 1500, 2000, 2500, 3000]
         self.current_ai_delay_idx = 1
         self.average_fps = 0
 
         # path to save the highest scoring AI weights to
+        #lưu điểm AI cao nhất 
         self.output_weight_path = 'data/weights.txt'
         self.highest_score = 0
         self.next_move_outline = True
@@ -54,22 +58,22 @@ class Tetro:
 
     def start(self):
         print(
-            '\n\nHey, thanks for checking out Tetro.\n'
-            'Press H while focused in the game to bring up available commands\n'
-            'If you find any issues or bugs please report them on my GitHub repo at:\n'
-            'https://github.com/johnliu4/tetro.git. Thanks!\n'
             'Have fun with Tetro. :)\n')
         self.game_running = True
         self.game_loop()
 
     # init pygame and any gui related components
+    #bắt dầy pygame và giao diện liên quan 
     def init_pygame(self):
         pygame.init()
         # dimensions of the Tetris grid itself
+        #kích thước của lưới 
         tetris_width = self.grid_width * self.cell_width
         tetris_height = self.grid_height * self.cell_width
         # additional gui space is determined by the largest tetromino that can fit
+        # không gian giao diện được bổ sung bởi tetromino lớn nhất có thể vừa 
         # this is since the gui will show the next tetromino piece
+        # giao diện sẽ hiển thị tetromino tiếp theo 
         extra_width = (tetromino.get_largest_tetromino_size() + 2) * self.cell_width
         self.pygame_surface = pygame.display.set_mode((tetris_width + extra_width, tetris_height))
 
@@ -82,6 +86,7 @@ class Tetro:
             self.start_button.set_text('Start')
 
     # loads game options from the properties file
+    # load lựa chọn game từ file properties 
     def load_properties(self):
         with open('data/properties.txt', 'r') as f:
             for line in f:
@@ -128,6 +133,7 @@ class Tetro:
             self.update_gui_title()
 
             # keep track of average FPS over the last 10 seconds
+            #theo dõi FPS trung bình trong 10 giây qua
             fps_counter += 1
             fps_timer += game_clock.get_time()
             if fps_timer >= 1000:
@@ -136,11 +142,13 @@ class Tetro:
                 fps_timer -= 1000
 
             # run as fact as you can!
+            #chạy thực tế như bạn có thể!
             pygame.time.wait(1)
             game_clock.tick()
 
     def update(self):
         # update all Tetris instances that have not lost yet
+        #update các trường hopwk Tetris vẫn chưa mất
         all_lost = True
         for inst, ai in zip(self.tetris_instances, self.tetris_ais):
             inst.update()
@@ -150,6 +158,7 @@ class Tetro:
             inst.next_move = ai.compute_move(inst)
 
         # start next generation if all Tetris instances have lost
+        #bắt đầu thế hệ mới nếu tất cả trường hopwk tetris đã mất 
         if all_lost:
             self.next_generation()
 
@@ -254,6 +263,7 @@ class Tetro:
 
     def generate_random_games(self, num=1):
         """Generates a completely new set of Tetris instanes and AIs with randomized weights."""
+        #Tạo một tập hợp các phiên bản Tetris và AI hoàn toàn mới với trọng số ngẫu nhiên.
 
         self.tetris_instances.clear()
         self.tetris_ais.clear()
@@ -263,9 +273,11 @@ class Tetro:
 
     def next_generation(self):
         """Ends the current generation and produces the next generation of AIs."""
+        #kết thúc thế hệ hiện tại và sản sinh thế hệ mới 
 
         self.generation += 1
         # get fitness scores and sort
+        #sắp xếp điểm fitness
         fitness_scores = [(inst.lines_cleared, i) for i, inst in enumerate(self.tetris_instances)]
         list.sort(fitness_scores, key=lambda elem: elem[0])
         fitness_scores.reverse()
@@ -284,6 +296,7 @@ class Tetro:
         print('Most cleared column diff weights: ', self.format_float_list(self.tetris_ais[highest_scores[0][1]].column_diff_weights, brackets=True))
 
         # save the weights of the highest scoring AI
+        #lưu ô với điểm cao nhất 
         with open('data/weights.txt', 'a') as f:
             f.write('\n')
             f.write(str(datetime.now()) + '\n')
@@ -294,18 +307,24 @@ class Tetro:
             f.write(self.format_float_list(self.tetris_ais[highest_scores[0][1]].column_diff_weights, brackets=True) + '\n')
 
         # prepare next generation
+        # chuẩn bị thế hệ tiếp theo 
         new_ais = []
         # create completely new AIs if the average was too low
+        #tạo AI mới neeys điểm tb quá thấp 
         if avg_most <= 0.1:
             [new_ais.append(TetrisAI(self.grid_width, self.grid_height, [], [], [])) for i in range(self.population_size)]
         else:
             # produce new generation
             # let the upper third of the most fit of this generation continue on as is
+            #hãy để một phần ba trên của những người phù hợp nhất của thế hệ này tiếp tục như hiện tại
             for i in range(self.population_size // 2):
                 new_ais.append(self.tetris_ais[fitness_scores[i][1]].clone())
             # then crossover until the population size is reached
+            #sau đó giao nhau cho đến khi đạt đến kích thước quần thể
+
             while len(new_ais) != self.population_size:
                 # randomly select two different parents
+                # ngẫu nhiên lựa 2 bố mẹ khác nhau 
                 idx1 = randint(0, len(highest_scores) - 1)
                 idx2 = idx1
                 while idx2 == idx1:
@@ -335,6 +354,7 @@ class Tetro:
         print(f'\n----- Starting Generation {self.generation} -----')
 
     # returns a list of tuples containing the Tetris instance index and its score in sorted order
+    # trả về một danh sách các bộ chứa chỉ mục phiên bản Tetris và điểm của nó theo thứ tự được sắp xếp
     def print_current_generation_stats(self):
         """Gets information about the current generation of Tetris AIs.
 
@@ -344,11 +364,12 @@ class Tetro:
         """
 
         # get fitness scores and sort
+        #tính điểm fitness và sắp xếp 
         fitness_scores = [(inst.lines_cleared, '' if inst.lost else ' (Alive)') for i, inst in enumerate(self.tetris_instances)]
         print('\nLines cleared: ', (', ').join([f'{elem[0]}{elem[1]}' for elem in fitness_scores]))
 
     def print_current_game_stats(self):
-        """Prints to console the status of the currently spectated game."""
+        """In ra bảng điều khiển trạng thái của trò chơi hiện đang theo dõi."""
 
         print(f'\nYou are currently viewing game: {self.current_spectating_idx + 1}')
         print('Row filled weights: ', self.format_float_list(self.tetris_ais[self.current_spectating_idx].row_filled_weights, brackets=True))
