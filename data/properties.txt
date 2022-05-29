@@ -1,0 +1,15 @@
+# Specify game options here in this file.
+# Comments begin on their own line with a '#'.
+# The default options are listed as is.
+# All properties are expressed in the form key=value
+# on their own line. Keys and values are case sensitive.
+
+# dimensions of Tetris grid
+grid_width=10
+grid_height=20
+# population size at any generation
+population_size=60
+# how many networks to use for next generation
+selection_size=10
+# mutation chance, expressed as a decimal
+mutate_rate=0.04
